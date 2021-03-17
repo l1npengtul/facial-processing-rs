@@ -1,0 +1,30 @@
+[package]
+name = "facial_processing"
+version = "0.1.0"
+authors = ["l1npengtul <l1npengtul@protonmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+vulkan = ["vulkano"]
+opencl = ["cl3"]
+
+[dependencies]
+thiserror = "1.0.24"
+
+[dependencies.vulkano]
+version = "0.21.0"
+optional = true
+
+[dependencies.cl3]
+version = "0.1.6"
+optional = true
+features = ["CL_VERSION_2_1", "CL_VERSION_2_2"]
+
+#[dependencies.tvm]
+#git = "https://github.com/l1npengtul/tvm.git"
+#branch = "main"
+#default-features = false
+#features = ["static-linking"]
