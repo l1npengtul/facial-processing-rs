@@ -1,14 +1,19 @@
 use crate::device::{DeviceBackend, DevicePointer};
-#[cfg(feature = "cl3")]
 use cl3::{
-    device::{get_device_ids, get_device_info, CL_DEVICE_TYPE_GPU},
+    device::{
+        get_device_ids,
+        get_device_info,
+        CL_DEVICE_TYPE_GPU,
+        DeviceInfo
+    },
     platform::get_platform_ids,
+    info_type::InfoType
 };
 use std::{mem::MaybeUninit, sync::Arc};
 #[cfg(feature = "vulkan")]
 use vulkano::instance::{Instance, InstanceCreationError, InstanceExtensions, PhysicalDevice};
 
-/// A way to access system properties. Used to enumerate devices to feed into TVM.
+/// A way to access system properties. Used to enumerate_devices devices to feed into TVM.
 ///
 /// Note that CPU enumeration is not supported at this time. Just use the default index for the CPU.
 pub struct System {
@@ -32,11 +37,15 @@ impl System {
         Ok(System { vk_instance })
     }
 
-    pub fn enumerate_gpus(&self) -> Result<Vec<DevicePointer>, Box<dyn std::error::Error>> {
+    pub fn enumerate_gpus(&self) -> Result<Vec<DevicePointer>, i32> {
         let mut dev_list: Vec<DevicePointer> = vec![];
         if cfg!(feature = "vulkan") {
             dev_list = self.enumerate_vulkan();
         } else if cfg!(feature = "opencl") {
+            dev_list = match self.enumerate_opencl() {
+                Ok(list) => list,
+                Err(why) => return Err(why),
+            };
         }
         Ok(dev_list)
     }
@@ -58,11 +67,11 @@ impl System {
         device_list
     }
 
-    #[cfg(feature = "cl3")]
+    #[cfg(feature = "opencl")]
     pub fn enumerate_opencl(&self) -> Result<Vec<DevicePointer>, i32> {
+        let mut dev_list: Vec<DevicePointer> = vec![];
         let platform_id = match get_platform_ids() {
             Ok(platform) => {
-                // if you don't have a platform id you probably shouldn't be running this software anyway
                 platform[0]
             }
             Err(why) => {
@@ -73,7 +82,34 @@ impl System {
             Ok(devs) => devs,
             Err(why) => return Err(why),
         };
-        for device_id in device_ids {}
-        Err(0)
+        for device_id in device_ids {
+            let device_info_name = match get_device_info(device_id, DeviceInfo::CL_DEVICE_NAME) {
+                Ok(i) => {
+                    i.to_str().unwrap().into_string().unwrap()
+                }
+                Err(why) => {
+                    return Err(why);
+                }
+            };
+
+            let device_info_vendor = match get_device_info(device_id, DeviceInfo::CL_DEVICE_VENDOR_ID) {
+                Ok(i) => {
+                    i.to_size()
+                }
+                Err(why) => {
+                    return Err(why);
+                }
+            };
+
+            let dev = DevicePointer {
+                name: device_info_name,
+                index: device_id as usize,
+                backend: DeviceBackend::ComputeOpenCL,
+                vendor_id: device_info_vendor,
+                device_id: 0,
+            };
+            dev_list.push(dev)
+        }
+        Ok(dev_list)
     }
 }

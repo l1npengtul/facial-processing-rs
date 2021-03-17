@@ -23,8 +23,8 @@ version = "0.1.6"
 optional = true
 features = ["CL_VERSION_2_1", "CL_VERSION_2_2"]
 
-#[dependencies.tvm]
-#git = "https://github.com/l1npengtul/tvm.git"
-#branch = "main"
-#default-features = false
-#features = ["static-linking"]
+[dependencies.tvm]
+git = "https://github.com/l1npengtul/tvm.git"
+branch = "main"
+default-features = false
+features = ["static-linking"]

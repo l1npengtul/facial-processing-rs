@@ -3,6 +3,6 @@ extern crate cl3;
 #[cfg(feature = "vulkan")]
 extern crate vulkano;
 
-mod device;
 mod error;
-mod system;
+mod enumerate_devices;
+mod detector;
