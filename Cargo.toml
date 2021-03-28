@@ -10,9 +10,12 @@ edition = "2018"
 default = []
 vulkan = ["vulkano"]
 opencl = ["cl3"]
+apachetvm = ["tvm"]
+tf = ["tflite"]
 
 [dependencies]
 thiserror = "1.0.24"
+num-traits = "0.2.14"
 
 [dependencies.vulkano]
 version = "0.21.0"
@@ -27,4 +30,9 @@ features = ["CL_VERSION_2_1", "CL_VERSION_2_2"]
 git = "https://github.com/l1npengtul/tvm.git"
 branch = "main"
 default-features = false
+optional = true
 features = ["static-linking"]
+
+[dependencies.tflite]
+version = "0.9.5"
+optional = true

@@ -1,4 +1,11 @@
-use crate::device::{DeviceBackend, DevicePointer};
+use crate::{
+    enumerate_devices::{
+        device::{
+            DevicePointer,
+            DeviceBackend
+        }
+    }
+};
 use cl3::{
     device::{
         get_device_ids,
