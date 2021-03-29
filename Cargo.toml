@@ -35,3 +35,5 @@ features = ["static-linking"]
 [dependencies.tflite]
 version = "0.9.5"
 optional = true
+
+[build-dependencies]

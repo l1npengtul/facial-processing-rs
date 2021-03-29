@@ -4,8 +4,23 @@ use thiserror::Error;
 pub enum FacialProcessingError {
     #[error("Could not enumerate_devices devices: {0}")]
     EnumerateDeviceError(String),
-    #[error("Cannot Find File: {0}")]
-    CannotFindFileError(String),
+    #[error("Error while trying to read file: {0}")]
+    IoError(String),
     #[error("Cannot Initialize Facial Processor: {0}")]
-    InitializeError(String)
+    InitializeError(String),
+    #[error("Internal Error: {0}")]
+    InternalError(String),
+}
+
+impl From<tflite::Error> for FacialProcessingError {
+    fn from(err: tflite::Error) -> Self {
+        return match err {
+            tflite::Error::IoError(io) => {
+                FacialProcessingError::IoError(io.to_string())
+            }
+            tflite::Error::InternalError(int) => {
+                FacialProcessingError::InternalError(int)
+            }
+        }
+    }
 }

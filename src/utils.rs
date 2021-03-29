@@ -1,5 +1,3 @@
-use num_traits::Num;
-
 pub enum SupportedProcesses {
     Detection,
     Alignment,

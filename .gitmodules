@@ -1,0 +1,3 @@
+[submodule "src/backends/openvtuber/weights"]
+	path = src/backends/openvtuber/weights
+	url = https://github.com/1996scarlet/OpenVtuber/

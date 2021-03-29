@@ -1,5 +1,5 @@
 This backend was taken from (OpenVTuber)[https://github.com/1996scarlet/OpenVtuber].
-The only thing taken directly was the *.tflite models.
+The only thing taken directly was the *.tflite models. The *.npy model in the subfolder is unused and not linked in the final binary.
 ```bibtex
 @InProceedings{Park_2018_ECCV,
       author = {Park, Seonwook and Spurr, Adrian and Hilliges, Otmar},
