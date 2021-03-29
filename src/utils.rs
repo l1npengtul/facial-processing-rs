@@ -39,3 +39,15 @@ pub struct BoundingBox<T: Num> {
 impl<T: Num> BoundingBox<T> {
     // pub fn new()
 }
+
+pub struct Eyes {
+    pub estimate_open: f32,
+    pub left_right: f32,
+    pub up_down: f32
+}
+
+pub struct Rotation {
+    x: f32,
+    y: f32,
+    z: f32,
+}

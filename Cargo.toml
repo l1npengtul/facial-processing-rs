@@ -12,10 +12,11 @@ vulkan = ["vulkano"]
 opencl = ["cl3"]
 apachetvm = ["tvm"]
 tf = ["tflite"]
+openvtuber=["tf"]
+
 
 [dependencies]
 thiserror = "1.0.24"
-num-traits = "0.2.14"
 
 [dependencies.vulkano]
 version = "0.21.0"
