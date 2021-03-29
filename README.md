@@ -1,5 +1,9 @@
 # facial-processing-rs
 A rust library enabling simple facial alignment. Note: `facial-processing-rs` contains multiple backends from multiple authors. WIP.
+## Features
+ - The `vulkan` and `opencl` features are for querying/indexing Vulkan and OpenCL devices respectivly. 
+ - Each of the remaining features enable a backend.
+ - NOTE: the `default` feature contains nothing!
 ## Contributing
  - Please `rustfmt` all your code.
 ## License

@@ -10,9 +10,7 @@ edition = "2018"
 default = []
 vulkan = ["vulkano"]
 opencl = ["cl3"]
-apachetvm = ["tvm"]
-tf = ["tflite"]
-openvtuber=["tf"]
+openvtuber=["tflite"]
 
 
 [dependencies]
