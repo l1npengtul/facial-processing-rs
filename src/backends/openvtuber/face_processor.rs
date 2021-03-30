@@ -5,11 +5,7 @@ use crate::{
 };
 use std::cell::{Cell, RefCell};
 use tflite::{
-    ops::builtin::BuiltinOpResolver,
-    Error,
-    FlatBufferModel,
-    Interpreter,
-    InterpreterBuilder,
+    ops::builtin::BuiltinOpResolver, Error, FlatBufferModel, Interpreter, InterpreterBuilder,
 };
 
 pub struct OpenVTFaceProcessor<'a> {
@@ -74,7 +70,7 @@ impl OpenVTFaceProcessor {
             Err(why) => return Err(FacialProcessingError(why)),
         };
     }
-    fn
+    fn prepare() {}
 }
 
 impl FaceProcessorTrait for OpenVTFaceProcessor {
@@ -86,11 +82,7 @@ impl FaceProcessorTrait for OpenVTFaceProcessor {
         unimplemented!()
     }
 
-    fn get_face_landmarks(
-        &self,
-        data: &Vec<u8>,
-        bbox: BoundingBox<f32>,
-    ) -> [Point<f32>; 68] {
+    fn get_face_landmarks(&self, data: &Vec<u8>, bbox: BoundingBox<f32>) -> [Point<f32>; 68] {
         unimplemented!()
     }
 

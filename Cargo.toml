@@ -11,7 +11,7 @@ default = []
 vulkan = ["vulkano"]
 opencl = ["cl3"]
 openvtuber=["tflite"]
-
+dlib = ["dlib-face-recognition"]
 
 [dependencies]
 thiserror = "1.0.24"
@@ -35,5 +35,10 @@ features = ["static-linking"]
 [dependencies.tflite]
 version = "0.9.5"
 optional = true
+
+[dependencies.dlib-face-recognition]
+version = "0.1.7"
+optional = true
+features = ["embed-all"]
 
 [build-dependencies]
