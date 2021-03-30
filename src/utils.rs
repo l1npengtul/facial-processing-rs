@@ -49,3 +49,8 @@ pub struct Rotation {
     y: f32,
     z: f32,
 }
+
+pub enum AvailableBackends {
+    OpenVTuber,
+    DLib,
+}
