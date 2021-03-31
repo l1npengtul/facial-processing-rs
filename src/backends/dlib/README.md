@@ -1,0 +1,1 @@
+This backend uses (Dlib)[https://github.com/davisking/dlib] and the binding crate (dlib-face-recognition)[https://github.com/podo-os/dlib-face-recognition]

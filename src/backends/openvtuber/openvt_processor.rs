@@ -1,13 +1,14 @@
+use crate::utils::misc::BoundingBox;
 use crate::{
     error::FacialProcessingError,
     face_processor_trait::FaceProcessorTrait,
-    utils::{BoundingBox, Eyes, Point, Rotation},
+    utils_post::{BoundingBox, Eyes, Point, Rotation},
 };
+use image::ImageBuffer;
 use std::cell::{Cell, RefCell};
 use tflite::{
     ops::builtin::BuiltinOpResolver, Error, FlatBufferModel, Interpreter, InterpreterBuilder,
 };
-use image::ImageBuffer;
 
 pub struct OpenVTFaceProcessor<'a> {
     face_detector_model: RefCell<Interpreter<'a, BuiltinOpResolver>>,
@@ -72,26 +73,4 @@ impl OpenVTFaceProcessor {
         };
     }
     fn prepare() {}
-}
-
-impl FaceProcessorTrait for OpenVTFaceProcessor {
-    fn init(&self, cpu: i16, confidence: f32) -> Result<(), FacialProcessingError> {
-        todo!()
-    }
-
-    fn get_face_detections(&self, data: &ImageBuffer<u8, &[u8]>) -> Vec<BoundingBox<f32>> {
-        todo!()
-    }
-
-    fn get_face_landmarks(&self, data: &ImageBuffer<u8, &[u8]>, bbox: BoundingBox<f32>) -> [Point<f32>; 68] {
-        todo!()
-    }
-
-    fn get_iris_locations(&self, data: &ImageBuffer<u8, &[u8]>, irises: &[Point<f32>; 68]) -> [Eyes; 2] {
-        todo!()
-    }
-
-    fn solve_pose(&self, pose: &[Point<f32>; 68]) -> Rotation {
-        todo!()
-    }
 }
