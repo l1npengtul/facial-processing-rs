@@ -1,5 +1,6 @@
 #[cfg(feature = "dlib")]
 use dlib_face_recognition::Rectangle;
+use image::imageops::FilterType;
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub enum LeftRight {
@@ -96,7 +97,14 @@ pub struct Rotation {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum AvailableBackends {
+pub enum BackendProviders {
     OpenVTuber,
     DLib,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct ImageScale {
+    pub target_x: u32,
+    pub target_y: u32,
+    pub method: FilterType,
 }
