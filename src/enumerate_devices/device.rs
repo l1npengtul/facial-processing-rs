@@ -1,3 +1,5 @@
+use crate::enumerate_devices::system::OpenCLEnumerateType;
+
 /// Types of devices supported by this crate. Note the exclusions of CPU, since it is expected that there is only 1 per device, they need no enumeration.
 ///
 /// GpuVulkan => GPU that is capable of vulkan. NOTE: Only possible if you enabled the `vulkan` feature.
@@ -9,7 +11,7 @@
 pub enum DeviceBackend {
     GpuVulkan,
     GpuOpenGL,
-    ComputeOpenCL,
+    ComputeOpenCL(OpenCLEnumerateType),
 }
 
 /// A struct that holds basic information of a device, enough for it to be shown to a user and accessed by the TVM Runtime.

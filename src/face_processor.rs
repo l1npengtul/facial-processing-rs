@@ -1,8 +1,18 @@
 // TODO: Unified detector that abstracts over a backend here
 
-use crate::face_processor_trait::FaceProcessorTrait;
-use crate::utils::misc::{BackendProviders, ImageScale};
-use image::imageops::FilterType;
+use crate::{
+    backends::{
+        dlib::dlib_processor::DLibProcessor, openvtuber::openvt_processor::OpenVTFaceProcessor,
+    },
+    error::FacialProcessingError,
+    face_processor_trait::FaceProcessorTrait,
+    utils::{
+        face::FaceLandmark,
+        misc::{BackendProviders, ImageScale},
+    },
+};
+use getset::{CopyGetters, Getters, MutGetters};
+use image::{imageops::FilterType, ImageBuffer, Rgb};
 use std::cell::{Cell, RefCell};
 
 pub struct FaceProcessorBuilder {
@@ -14,7 +24,6 @@ pub struct FaceProcessorBuilder {
     input_image_x: u32,
     input_image_y: u32,
     image_scale: Option<ImageScale>,
-    quality: i8,
 }
 
 impl FaceProcessorBuilder {
@@ -28,7 +37,6 @@ impl FaceProcessorBuilder {
             input_image_x: 640,
             input_image_y: 480,
             image_scale: None,
-            quality: 3,
         }
     }
 
@@ -42,7 +50,6 @@ impl FaceProcessorBuilder {
             input_image_x: self.input_image_x,
             input_image_y: self.input_image_y,
             image_scale: self.image_scale,
-            quality: self.quality,
         }
     }
 
@@ -61,7 +68,6 @@ impl FaceProcessorBuilder {
             input_image_x: self.input_image_x,
             input_image_y: self.input_image_y,
             image_scale,
-            quality: self.quality,
         }
     }
 
@@ -75,7 +81,6 @@ impl FaceProcessorBuilder {
             input_image_x,
             input_image_y,
             image_scale: self.image_scale,
-            quality: self.quality,
         }
     }
 
@@ -89,7 +94,6 @@ impl FaceProcessorBuilder {
             input_image_x: self.input_image_x,
             input_image_y: self.input_image_y,
             image_scale: self.image_scale,
-            quality: self.quality,
         }
     }
 
@@ -104,7 +108,6 @@ impl FaceProcessorBuilder {
             input_image_x: self.input_image_x,
             input_image_y: self.input_image_y,
             image_scale: self.image_scale,
-            quality: self.quality,
         }
     }
 
@@ -118,7 +121,6 @@ impl FaceProcessorBuilder {
             input_image_x: self.input_image_x,
             input_image_y: self.input_image_y,
             image_scale: self.image_scale,
-            quality: self.quality,
         }
     }
 
@@ -132,39 +134,79 @@ impl FaceProcessorBuilder {
             input_image_x: self.input_image_x,
             input_image_y: self.input_image_y,
             image_scale: self.image_scale,
-            quality: self.quality,
         }
     }
 
-    pub fn with_quality(self, quality: i8) -> Self {
-        FaceProcessorBuilder {
-            backend: self.backend,
-            desired_threads: self.desired_threads,
+    pub fn build(self) -> Result<FaceProcessor, FacialProcessingError> {
+        let backend_held: Box<dyn FaceProcessorTrait> = match self.backend.clone() {
+            BackendProviders::OpenVTuber {
+                face_detector_path,
+                face_alignment_path,
+                face_eyesolator_path,
+            } => {
+                match OpenVTFaceProcessor::new(
+                    face_detector_path,
+                    face_alignment_path,
+                    face_eyesolator_path,
+                ) {
+                    Ok(process) => Box::new(process),
+                    Err(why) => return Err(why),
+                }
+            }
+            BackendProviders::DLib {
+                face_alignment_path,
+            } => match DLibProcessor::new(face_alignment_path) {
+                Ok(process) => Box::new(process),
+                Err(why) => return Err(why),
+            },
+        };
+
+        Ok(FaceProcessor {
+            backend_setting: self.backend,
+            backend_held,
             do_eye_calculations: self.do_eye_calculations,
             do_mouth_calculations: self.do_mouth_calculations,
             eye_blink_ratio: self.eye_blink_ratio,
             input_image_x: self.input_image_x,
             input_image_y: self.input_image_y,
             image_scale: self.image_scale,
-            quality,
-        }
-    }
-
-    pub fn build(self) -> Result<FaceProcessor, ()> {
-        Err(())
+        })
     }
 }
 
 pub struct FaceProcessor {
-    backend_setting: Cell<BackendProviders>,
-    backend_held: RefCell<Box<dyn FaceProcessorTrait>>,
-    do_eye_calculations: Cell<bool>,
-    do_mouth_calculations: Cell<bool>,
-    eye_blink_ratio: Cell<f64>,
-    input_image_x: Cell<u32>,
-    input_image_y: Cell<u32>,
-    image_scale: Cell<Option<ImageScale>>,
-    quality: Cell<i8>,
+    #[getset(get = "pub")]
+    backend_setting: BackendProviders,
+    #[getset(get = "pub")]
+    backend_held: Box<dyn FaceProcessorTrait>,
+    #[getset(get_copy = "pub", set = "pub")]
+    do_eye_calculations: bool,
+    #[getset(get_copy = "pub", set = "pub")]
+    do_mouth_calculations: bool,
+    #[getset(get_copy = "pub", set = "pub")]
+    eye_blink_ratio: f64,
+    #[getset(get_copy = "pub", set = "pub")]
+    input_image_x: u32,
+    #[getset(get_copy = "pub", set = "pub")]
+    input_image_y: u32,
+    #[getset(get_copy = "pub", set = "pub")]
+    image_scale: Option<ImageScale>,
 }
 
-impl FaceProcessor {}
+impl FaceProcessor {
+    pub fn calculate_raw_landmarks(
+        &self,
+        image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+    ) -> Vec<FaceLandmark> {
+        self.backend_held.get_face_landmark(image)
+    }
+
+    pub fn calculate_pnp(&self, image: &ImageBuffer<Rgb<u8>, Vec<u8>>, landmark: FaceLandmark) {}
+
+    pub fn calculate_pnps(
+        &self,
+        image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+        landmark: Vec<FaceLandmark>,
+    ) {
+    }
+}

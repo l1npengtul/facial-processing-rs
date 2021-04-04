@@ -1,6 +1,10 @@
+use crate::error::FacialProcessingError;
 #[cfg(feature = "dlib")]
-use dlib_face_recognition::Rectangle;
+use dlib_face_recognition::{Point, Rectangle};
 use image::imageops::FilterType;
+use nalgebra::{Matrix, Matrix1x2, Matrix1x4, Matrix2x1, Matrix4x1};
+use opencv::{core::CV_32F, video::KalmanFilter, Error};
+use std::{cell::Cell, path::Path};
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub enum LeftRight {
@@ -22,34 +26,42 @@ pub enum SupportedProcesses {
 }
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
-pub struct Point {
+pub struct Point2D {
     pub x: i32,
     pub y: i32,
 }
-impl Point {
+impl Point2D {
     pub fn new(x: i32, y: i32) -> Self {
-        Point { x, y }
+        Point2D { x, y }
     }
 }
-impl Default for Point {
+impl Default for Point2D {
     fn default() -> Self {
-        Point { x: 0, y: 0 }
+        Point2D { x: 0, y: 0 }
+    }
+}
+impl From<Point> for Point2D {
+    fn from(pt: Point) -> Self {
+        Point2D {
+            x: pt.x as i32,
+            y: pt.y as i32,
+        }
     }
 }
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
-pub struct FloatingPoint {
+pub struct FloatingPoint2D {
     pub x: f64,
     pub y: f64,
 }
-impl FloatingPoint {
+impl FloatingPoint2D {
     pub fn new(x: f64, y: f64) -> Self {
-        FloatingPoint { x, y }
+        FloatingPoint2D { x, y }
     }
 }
-impl Default for FloatingPoint {
+impl Default for FloatingPoint2D {
     fn default() -> Self {
-        FloatingPoint { x: 0_f64, y: 0_f64 }
+        FloatingPoint2D { x: 0_f64, y: 0_f64 }
     }
 }
 
@@ -63,14 +75,14 @@ pub struct BoundingBox {
 }
 impl BoundingBox {
     // pub fn new()
-    pub fn low_point(&self) -> Point {
-        Point::new(self.x_minumum, self.y_minumum)
+    pub fn low_point(&self) -> Point2D {
+        Point2D::new(self.x_minumum, self.y_minumum)
     }
-    pub fn high_point(&self) -> Point {
-        Point::new(self.x_maximum, self.y_maximum)
+    pub fn high_point(&self) -> Point2D {
+        Point2D::new(self.x_maximum, self.y_maximum)
     }
-    pub fn center(&self) -> FloatingPoint {
-        FloatingPoint::new(
+    pub fn center(&self) -> FloatingPoint2D {
+        FloatingPoint2D::new(
             (self.x_maximum - self.x_minumum) / 2_f64 as f64,
             (self.y_maximum - self.y_minumum) / 2_f64 as f64,
         )
@@ -88,18 +100,35 @@ impl From<Rectangle> for BoundingBox {
         }
     }
 }
+#[cfg(feature = "dlib")]
+impl Into<Rectangle> for BoundingBox {
+    fn into(self) -> Rectangle {
+        Rectangle {
+            left: self.x_minumum as i64,
+            top: self.y_maximum as i64,
+            right: self.x_maximum as i64,
+            bottom: self.y_minumum as i64,
+        }
+    }
+}
 
-#[derive(Copy, Clone, Debug, Default, PartialOrd, PartialEq)]
-pub struct Rotation {
+#[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
+pub struct EulerAngles {
     x: f64,
     y: f64,
     z: f64,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub enum BackendProviders {
-    OpenVTuber,
-    DLib,
+    OpenVTuber {
+        face_detector_path: Path,
+        face_alignment_path: Path,
+        face_eyesolator_path: Path,
+    },
+    DLib {
+        face_alignment_path: Path,
+    },
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -108,3 +137,30 @@ pub struct ImageScale {
     pub target_y: u32,
     pub method: FilterType,
 }
+
+// pub struct SingleKalmanFilter {
+//     kalman_filter: KalmanFilter,
+//     state_num: i8,
+//     measure_num: i8,
+//     state_matrix: Cell<Matrix1x4<f32>>,
+//     measurement_matrix: Cell<Matrix1x2<f32>>,
+//     prediction_matrix: Cell<Matrix1x4<f32>>,
+// }
+//
+// impl SingleKalmanFilter {
+//     pub fn new() -> Result<Self, FacialProcessingError> {
+//         let kalman_filter = match KalmanFilter::new(4, 2, 0, CV_32F) {
+//             Ok(f) => f,
+//             Err(why) => return Err(FacialProcessingError::InitializeError(why.to_string())),
+//         };
+//
+//         let state_matrix: Matrix1x4<f32> = Matrix1x4::new(
+//             0.0,
+//             0.0,
+//             0.0,
+//             0.0,
+//         );
+//
+//         let me
+//     }
+// }

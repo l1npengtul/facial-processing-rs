@@ -15,6 +15,10 @@ dlib = ["dlib-face-recognition"]
 
 [dependencies]
 thiserror = "1.0.24"
+getset = "0.1.1"
+image = "0.23.14"
+ndarray = "0.15.1"
+nalgebra = "0.25.4"
 
 [dependencies.vulkano]
 version = "0.21.0"
@@ -40,11 +44,8 @@ optional = true
 version = "0.1.7"
 optional = true
 
-[dependencies.image]
-version = "0.23.14"
-
 [dependencies.opencv]
 version = "0.51.0"
-features = ["clang-runtime", "buildtime-bindgen"]
+features = ["clang-runtime"] # build with precompiled opencv 4.3.0
 
 [build-dependencies]

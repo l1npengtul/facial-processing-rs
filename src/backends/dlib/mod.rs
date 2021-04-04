@@ -1,1 +1,2 @@
-mod dlib_processor;
+#[cfg(feature = "dlib")]
+pub mod dlib_processor;

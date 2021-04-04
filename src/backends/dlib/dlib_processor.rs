@@ -1,36 +1,84 @@
-use crate::error::FacialProcessingError;
-use crate::utils_post::BoundingBox;
+use crate::{
+    error::FacialProcessingError,
+    face_processor_trait::FaceProcessorTrait,
+    utils::{
+        eyes::Eye,
+        face::FaceLandmark,
+        misc::{BoundingBox, EulerAngles, Point2D},
+    },
+};
 use dlib_face_recognition::{
     FaceDetector, FaceDetectorTrait, ImageMatrix, LandmarkPredictor, LandmarkPredictorTrait,
     Rectangle,
 };
 use image::{ImageBuffer, Rgb};
 use std::path::Path;
-use crate::utils::misc::BoundingBox;
+use vulkano::descriptor::descriptor_set::DescriptorSetsCollection;
 
-pub struct DlibProcessor {
+pub struct DLibProcessor {
     face_detector: FaceDetector,
     landmark_detector: LandmarkPredictor,
 }
 
-impl DlibProcessor {
-    pub fn from_file<P: AsRef<Path>>(landmark_detector: P) -> Result<Self, FacialProcessingError> {
+impl DLibProcessor {
+    pub fn new<P: AsRef<Path>>(landmark_detector: P) -> Result<Self, FacialProcessingError> {
         let landmark = match LandmarkPredictor::new(landmark_detector) {
             Ok(land) => land,
             Err(why) => Err(FacialProcessingError::InitializeError(why)),
         };
-        Ok(DlibProcessor {
+        Ok(DLibProcessor {
             face_detector: FaceDetector::new(),
             landmark_detector: landmark,
         })
     }
-    fn detect_faces(&self, data: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<BoundingBox> {
+
+    pub fn detect_faces(&self, data: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<BoundingBox> {
+        self.detect_faces_imagematrix(&ImageMatrix::from_image(data))
+    }
+
+    pub fn detect_faces_imagematrix(&self, data: &ImageMatrix) -> Vec<BoundingBox> {
         let mut boxes: Vec<BoundingBox> = vec![];
-        let image = ImageMatrix::from_image(data);
-        for rect in self.face_detector.face_locations(&image).iter() {
+        for rect in self.face_detector.face_locations(data).iter() {
             boxes.push(BoundingBox::from(*rect))
         }
         boxes
     }
-    fn landmark_faces(&self, data: &ImageBuffer<Rgb<u8>, Vec<u8>>, bboxes: Vec<BoundingBox>) ->
+
+    pub fn landmark_faces(
+        &self,
+        data: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+        bbox: BoundingBox,
+    ) -> Vec<FaceLandmark> {
+        self.landmark_faces_imagematrix(&ImageMatrix::from_image(data), bbox)
+    }
+
+    pub fn landmark_faces_imagematrix(
+        &self,
+        data: &ImageMatrix,
+        bbox: BoundingBox,
+    ) -> Vec<FaceLandmark> {
+        let mut landmarks = vec![];
+        let landmark = self.landmark_detector.face_landmarks(data, bbox.into());
+        landmarks.push(FaceLandmark::from_dlib(bbox, landmark.to_vec()));
+        landmarks
+    }
+}
+
+impl FaceProcessorTrait for DLibProcessor {
+    fn init(&self, cpu: i16, confidence: f32) -> Result<(), FacialProcessingError> {
+        // nothing to-do here.
+        Ok(())
+    }
+
+    fn get_face_detections(&self, data: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<BoundingBox> {
+        self.detect_faces(data)
+    }
+
+    fn get_face_landmark(
+        &self,
+        data: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+        bbox: BoundingBox,
+    ) -> Vec<FaceLandmark> {
+        self.landmark_faces(data, bbox)
+    }
 }
