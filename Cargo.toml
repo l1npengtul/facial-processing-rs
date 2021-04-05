@@ -48,4 +48,9 @@ optional = true
 version = "0.51.0"
 features = ["clang-runtime"] # build with precompiled opencv 4.3.0
 
+[dependencies.cv-convert]
+version = "0.5.0"
+default-features = false
+features = ["opencv-4", "opencv-buildtime-bindgen", "nalgebra"]
+
 [build-dependencies]
