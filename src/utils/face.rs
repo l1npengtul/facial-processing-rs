@@ -1,5 +1,6 @@
 use crate::utils::misc::{BoundingBox, LeftRight, Point2D};
 use dlib_face_recognition::Point;
+use opencv::core::{Point2d, ToInputArray, Vector, _InputArray};
 
 #[derive(Copy, Clone, Debug, Default, PartialOrd, PartialEq)]
 pub struct FaceLandmark {
@@ -130,6 +131,17 @@ impl FaceLandmark {
             *self.all.get(16).unwrap(),
         ]
     }
+
+    pub fn pnp_landmarks(&self) -> [Point2D; 6] {
+        [
+            *self.all.get(30).unwrap(),
+            *self.all.get(8).unwrap(),
+            *self.all.get(36).unwrap(),
+            *self.all.get(45).unwrap(),
+            *self.all.get(48).unwrap(),
+            *self.all.get(54).unwrap(),
+        ]
+    }
 }
 
 impl IntoIterator for FaceLandmark {
@@ -138,5 +150,15 @@ impl IntoIterator for FaceLandmark {
 
     fn into_iter(self) -> Self::IntoIter {
         self.all.into_iter()
+    }
+}
+
+impl ToInputArray for FaceLandmark {
+    fn input_array(&self) -> opencv::Result<_InputArray> {
+        let mut vector_pt: Vector<Point2d> = Vector::new();
+        for point in self.all {
+            vector_pt.push(point.into())
+        }
+        vector_pt.input_array()
     }
 }
