@@ -4,38 +4,16 @@ use cv_convert::{TryFromCv, TryIntoCv};
 use dlib_face_recognition::{Point, Rectangle};
 use image::imageops::FilterType;
 use nalgebra::{DMatrix, Matrix, Matrix1x2, Matrix1x4, Matrix2x1, Matrix3, Matrix4x1};
+use opencv::core::{Vec3, Vec3d};
 use opencv::{
-    core::{
-        ToInputArray,
-        ToOutputArray,
-        _InputArray,
-        _InputOutputArray,
-        Vector,
-        Mat,
-        MatExpr,
-        MatExprTrait,
-        MatTrait,
-        Point2d,
-        Point3d,
-        CV_32F,
-        CV_64F,
-    },
     calib3d::{
-        UsacParams,
-        solve_pnp_ransac_1,
-        solve_pnp,
-        solve_pnp_ransac,
-        SOLVEPNP_AP3P,
-        SOLVEPNP_DLS,
-        SOLVEPNP_EPNP,
-        SOLVEPNP_IPPE,
-        SOLVEPNP_IPPE_SQUARE,
-        SOLVEPNP_ITERATIVE,
-        SOLVEPNP_MAX_COUNT,
-        SOLVEPNP_SQPNP,
-        SOLVEPNP_UPNP,
-        rodrigues,
-        rq_decomp3x3,
+        rodrigues, rq_decomp3x3, solve_pnp, solve_pnp_ransac, solve_pnp_ransac_1, UsacParams,
+        SOLVEPNP_AP3P, SOLVEPNP_DLS, SOLVEPNP_EPNP, SOLVEPNP_IPPE, SOLVEPNP_IPPE_SQUARE,
+        SOLVEPNP_ITERATIVE, SOLVEPNP_MAX_COUNT, SOLVEPNP_SQPNP, SOLVEPNP_UPNP,
+    },
+    core::{
+        Mat, MatExpr, MatExprTrait, MatTrait, Point2d, Point3d, ToInputArray, ToOutputArray,
+        Vector, _InputArray, _InputOutputArray, CV_32F, CV_64F,
     },
     video::KalmanFilter,
     Error,
@@ -159,6 +137,15 @@ pub struct EulerAngles {
     x: f64,
     y: f64,
     z: f64,
+}
+impl From<Vec3d> for EulerAngles {
+    fn from(vec: Vec3d) -> Self {
+        EulerAngles {
+            x: *vec.get(0).unwrap(),
+            y: *vec.get(1).unwrap(),
+            z: *vec.get(2).unwrap(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -359,17 +346,52 @@ impl PnPSolver {
                     Ok(m) => m,
                     Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
                 };
-                match rodrigues(&rvec.input_array(), &mut dest.output_array(), &mut jackobin.output_array()) {
+                match rodrigues(
+                    &rvec.input_array(),
+                    &mut dest.output_array(),
+                    &mut jackobin.output_array(),
+                ) {
                     Ok(_) => {}
                     Err(_) => {
-                        return Err(FacialProcessingError::InternalError("Failed to calculate rodrigues!".to_string()))
+                        return Err(FacialProcessingError::InternalError(
+                            "Failed to calculate rodrigues!".to_string(),
+                        ))
                     }
                 }
 
-                match rq_decomp3x3(&mut dest.input_array(), ) // TODO: fix
-            }
+                let mut mtx_r = match Mat::default() {
+                    Ok(m) => m,
+                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
+                };
+                let mut mtx_q = match Mat::default() {
+                    Ok(m) => m,
+                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
+                };
+                let mut qx = match Mat::default() {
+                    Ok(m) => m,
+                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
+                };
+                let mut qy = match Mat::default() {
+                    Ok(m) => m,
+                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
+                };
+                let mut qz = match Mat::default() {
+                    Ok(m) => m,
+                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
+                };
 
-            match
+                match rq_decomp3x3(
+                    &mut dest.input_array(),
+                    &mut mtx_r.output_array(),
+                    &mut mtx_q.output_array(),
+                    &mut qx.output_array(),
+                    &mut qy.output_array(),
+                    &mut qz.output_array(),
+                ) {
+                    Ok(rots) => return Ok(EulerAngles::from(rots)),
+                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
+                }
+            }
             Err(f) => Err(f),
         }
     }
