@@ -18,6 +18,7 @@ use opencv::{
     video::KalmanFilter,
     Error,
 };
+use std::ops::Sub;
 use std::{cell::Cell, path::Path};
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
@@ -48,6 +49,12 @@ impl Point2D {
     pub fn new(x: f64, y: f64) -> Self {
         Point2D { x, y }
     }
+    pub fn x(&self) -> f64 {
+        self.x
+    }
+    pub fn y(&self) -> f64 {
+        self.y
+    }
 }
 impl Default for Point2D {
     fn default() -> Self {
@@ -66,6 +73,14 @@ impl From<Point> for Point2D {
 impl Into<Point2d> for Point2D {
     fn into(self) -> Point2d {
         Point2d::new(self.x, self.y)
+    }
+}
+
+impl Sub<Point2D> for Point2D {
+    type Output = Point2D;
+
+    fn sub(self, rhs: Point2D) -> Self::Output {
+        Point2D::new(self.x - rhs.x, self.y - rhs.y)
     }
 }
 
@@ -388,8 +403,8 @@ impl PnPSolver {
                     &mut qy.output_array(),
                     &mut qz.output_array(),
                 ) {
-                    Ok(rots) => return Ok(EulerAngles::from(rots)),
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
+                    Ok(rots) => Ok(EulerAngles::from(rots)),
+                    Err(why) => Err(FacialProcessingError::InternalError(why.to_string())),
                 }
             }
             Err(f) => Err(f),
