@@ -1,18 +1,32 @@
 use crate::{
+    error::FacialProcessingError,
     pt_abs, pt_dist, pt_mdpt,
     utils::{
         face::FaceLandmark,
         misc::{LeftRight, Point2D},
     },
 };
-use image::imageops::crop_imm;
-use image::{ImageBuffer, Rgb};
+use cv_convert::{TryFromCv, TryIntoCv};
+use image::{imageops::crop_imm, ImageBuffer, Rgb};
+use nalgebra::Matrix3;
+use opencv::{
+    core::{Mat, MatTrait, CV_64F},
+    Error,
+};
 use std::cmp::{max, min};
+
+fn isolate_iris(
+    eye_img: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+    threshold: f64,
+) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+    let kernel: Matrix3<u8> = nalgebra::Matrix3::zeros();
+    let kernel_cv = Mat::try_from_cv(kernel).unwrap();
+}
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub struct Eye {
     points: [Point2D; 6],
-    leftright: LeftRight,
+    side: LeftRight,
     center_pt: Option<Point2D>,
     ear_aspect_ratio: f64,
 }
@@ -63,7 +77,7 @@ impl Eye {
 
         Eye {
             points: landmarks.eye_landmarks(side),
-            leftright: side,
+            side,
             center_pt: None,
             ear_aspect_ratio,
         }

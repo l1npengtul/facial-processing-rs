@@ -4,7 +4,6 @@ use cv_convert::{TryFromCv, TryIntoCv};
 use dlib_face_recognition::{Point, Rectangle};
 use image::imageops::FilterType;
 use nalgebra::{DMatrix, Matrix, Matrix1x2, Matrix1x4, Matrix2x1, Matrix3, Matrix4x1};
-use opencv::core::{Vec3, Vec3d};
 use opencv::{
     calib3d::{
         rodrigues, rq_decomp3x3, solve_pnp, solve_pnp_ransac, solve_pnp_ransac_1, UsacParams,
@@ -12,8 +11,8 @@ use opencv::{
         SOLVEPNP_ITERATIVE, SOLVEPNP_MAX_COUNT, SOLVEPNP_SQPNP, SOLVEPNP_UPNP,
     },
     core::{
-        Mat, MatExpr, MatExprTrait, MatTrait, Point2d, Point3d, ToInputArray, ToOutputArray,
-        Vector, _InputArray, _InputOutputArray, CV_32F, CV_64F,
+        Mat, MatExpr, MatExprTrait, MatTrait, Point2d, Point3d, ToInputArray, ToOutputArray, Vec3,
+        Vec3d, Vector, _InputArray, _InputOutputArray, CV_32F, CV_64F,
     },
     video::KalmanFilter,
     Error,
