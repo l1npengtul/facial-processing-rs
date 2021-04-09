@@ -8,7 +8,6 @@ extern crate tvm;
 extern crate vulkano;
 
 pub mod backends;
-pub mod enumerate_devices;
 pub mod error;
 pub mod face_processor;
 pub mod face_processor_trait;

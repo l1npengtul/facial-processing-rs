@@ -9,25 +9,21 @@ use crate::{
 use cv_convert::{TryFromCv, TryIntoCv};
 use image::{imageops::crop_imm, ImageBuffer, Rgb};
 use nalgebra::Matrix3;
+use opencv::core::{Point2i, ToInputArray, ToOutputArray, BORDER_CONSTANT, BORDER_DEFAULT};
+use opencv::imgproc::{
+    bilateral_filter, erode, morphology_default_border_value, threshold, THRESH_BINARY,
+};
 use opencv::{
     core::{Mat, MatTrait, CV_64F},
     Error,
 };
 use std::cmp::{max, min};
 
-fn isolate_iris(
-    eye_img: &ImageBuffer<Rgb<u8>, Vec<u8>>,
-    threshold: f64,
-) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
-    let kernel: Matrix3<u8> = nalgebra::Matrix3::zeros();
-    let kernel_cv = Mat::try_from_cv(kernel).unwrap();
-}
-
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub struct Eye {
     points: [Point2D; 6],
     side: LeftRight,
-    center_pt: Option<Point2D>,
+    center_pt: Point2D,
     ear_aspect_ratio: f64,
 }
 impl Eye {
@@ -50,36 +46,64 @@ impl Eye {
         let ear_aspect_ratio = vertical / (2.0 * horizontal);
         // get center location
         // get cropped image
-        let top_left_crop_start = {
-            Point2D::new(
-                *points.get(0).unwrap().x(),
-                max(*points.get(1).unwrap().y(), *points.get(2).unwrap().y()),
-            )
-        };
-        let bottom_left_crop_size = {
-            let tmp = Point2D::new(
-                *points.get(3).unwrap().x(),
-                min(*points.get(4).unwrap().y(), *points.get(5).unwrap().y()),
-            );
-            tmp - top_left_crop_start
-        };
-        let cropped_img = {
-            let imagebuffer: ImageBuffer<Rgb<u8>, Vec<u8>> = crop_imm(
-                image,
-                top_left_crop_start.x() as u32,
-                top_left_crop_start.y() as u32,
-                bottom_left_crop_size.x() as u32,
-                bottom_left_crop_size.y() as u32,
-            )
-            .to_image();
-            imagebuffer
-        };
+        // let top_left_crop_start = {
+        //     Point2D::new(
+        //         *points.get(0).unwrap().x(),
+        //         max(*points.get(1).unwrap().y(), *points.get(2).unwrap().y()),
+        //     )
+        // };
+        // let bottom_left_crop_size = {
+        //     let tmp = Point2D::new(
+        //         *points.get(3).unwrap().x(),
+        //         min(*points.get(4).unwrap().y(), *points.get(5).unwrap().y()),
+        //     );
+        //     tmp - top_left_crop_start
+        // };
+        // let cropped_img = {
+        //     let imagebuffer: ImageBuffer<Rgb<u8>, Vec<u8>> = crop_imm(
+        //         image,
+        //         top_left_crop_start.x() as u32,
+        //         top_left_crop_start.y() as u32,
+        //         bottom_left_crop_size.x() as u32,
+        //         bottom_left_crop_size.y() as u32,
+        //     )
+        //     .to_image();
+        //     imagebuffer
+        // };
+
+        // this is hacky code but we'll just assume the iris is at the center of the eye
+        // im too lazy for this
+
+        let center_pt = pt_mdpt![
+            *points.get(0).unwrap(),
+            *points.get(1).unwrap(),
+            *points.get(2).unwrap(),
+            *points.get(3).unwrap(),
+            *points.get(4).unwrap(),
+            *points.get(5).unwrap()
+        ];
 
         Eye {
             points: landmarks.eye_landmarks(side),
             side,
-            center_pt: None,
+            center_pt,
             ear_aspect_ratio,
         }
+    }
+
+    pub fn eye_ear_ratio(&self) -> f64 {
+        self.ear_aspect_ratio
+    }
+
+    pub fn iris_position(&self) -> Point2D {
+        self.center_pt
+    }
+
+    pub fn side(&self) -> LeftRight {
+        self.side
+    }
+
+    pub fn points(&self) -> [Point2D; 6] {
+        self.points
     }
 }

@@ -1,9 +1,12 @@
 // TODO: Unified detector that abstracts over a backend here
 
+#[cfg(feature = "dlib")]
+use crate::backends::dlib::dlib_processor::DLibProcessor;
+#[cfg(feature = "openvtuber")]
+use crate::backends::openvtuber::openvt_processor::OpenVTFaceProcessor;
+
+use crate::utils::misc::BoundingBox;
 use crate::{
-    backends::{
-        dlib::dlib_processor::DLibProcessor, openvtuber::openvt_processor::OpenVTFaceProcessor,
-    },
     error::FacialProcessingError,
     face_processor_trait::FaceProcessorTrait,
     utils::{
@@ -16,7 +19,7 @@ use image::{imageops::FilterType, ImageBuffer, Rgb};
 use std::cell::{Cell, RefCell};
 
 pub struct FaceProcessorBuilder {
-    backend: BackendProviders,
+    backend: Box<BackendProviders>,
     desired_threads: Option<i16>,
     do_eye_calculations: bool,
     do_mouth_calculations: bool,
@@ -29,7 +32,7 @@ pub struct FaceProcessorBuilder {
 impl FaceProcessorBuilder {
     pub fn new() -> Self {
         FaceProcessorBuilder {
-            backend: BackendProviders::DLib,
+            backend: Box::new(BackendProviders::None),
             desired_threads: None,
             do_eye_calculations: true,
             do_mouth_calculations: true,
@@ -86,7 +89,7 @@ impl FaceProcessorBuilder {
 
     pub fn with_backend(self, backend: BackendProviders) -> Self {
         FaceProcessorBuilder {
-            backend,
+            backend: Box::new(backend),
             desired_threads: self.desired_threads,
             do_eye_calculations: self.do_eye_calculations,
             do_mouth_calculations: self.do_mouth_calculations,
@@ -137,28 +140,35 @@ impl FaceProcessorBuilder {
         }
     }
 
+    #[cfg(feature = "dlib")]
     pub fn build(self) -> Result<FaceProcessor, FacialProcessingError> {
         let backend_held: Box<dyn FaceProcessorTrait> = match self.backend.clone() {
-            BackendProviders::OpenVTuber {
-                face_detector_path,
-                face_alignment_path,
-                face_eyesolator_path,
-            } => {
-                match OpenVTFaceProcessor::new(
-                    face_detector_path,
-                    face_alignment_path,
-                    face_eyesolator_path,
-                ) {
-                    Ok(process) => Box::new(process),
-                    Err(why) => return Err(why),
-                }
-            }
+            // BackendProviders::OpenVTuber {
+            //     face_detector_path,
+            //     face_alignment_path,
+            //     face_eyesolator_path,
+            // } => {
+            //     match OpenVTFaceProcessor::new(
+            //         face_detector_path,
+            //         face_alignment_path,
+            //         face_eyesolator_path,
+            //     ) {
+            //         Ok(process) => Box::new(process),
+            //         Err(why) => return Err(why),
+            //     }
+            // }
+            // TODO: Fix
             BackendProviders::DLib {
                 face_alignment_path,
             } => match DLibProcessor::new(face_alignment_path) {
                 Ok(process) => Box::new(process),
                 Err(why) => return Err(why),
             },
+            _ => {
+                return Err(FacialProcessingError::InitializeError(
+                    "unsupported!".to_string(),
+                ))
+            }
         };
 
         Ok(FaceProcessor {
@@ -175,21 +185,13 @@ impl FaceProcessorBuilder {
 }
 
 pub struct FaceProcessor {
-    #[getset(get = "pub")]
-    backend_setting: BackendProviders,
-    #[getset(get = "pub")]
+    backend_setting: Box<BackendProviders>,
     backend_held: Box<dyn FaceProcessorTrait>,
-    #[getset(get_copy = "pub", set = "pub")]
     do_eye_calculations: bool,
-    #[getset(get_copy = "pub", set = "pub")]
     do_mouth_calculations: bool,
-    #[getset(get_copy = "pub", set = "pub")]
     eye_blink_ratio: f64,
-    #[getset(get_copy = "pub", set = "pub")]
     input_image_x: u32,
-    #[getset(get_copy = "pub", set = "pub")]
     input_image_y: u32,
-    #[getset(get_copy = "pub", set = "pub")]
     image_scale: Option<ImageScale>,
 }
 
@@ -197,8 +199,9 @@ impl FaceProcessor {
     pub fn calculate_raw_landmarks(
         &self,
         image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+        bbox: BoundingBox,
     ) -> Vec<FaceLandmark> {
-        self.backend_held.get_face_landmark(image)
+        self.backend_held.get_face_landmark(image, bbox)
     }
 
     pub fn calculate_pnp(&self, image: &ImageBuffer<Rgb<u8>, Vec<u8>>, landmark: FaceLandmark) {}

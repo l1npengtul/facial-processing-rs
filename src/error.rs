@@ -12,6 +12,7 @@ pub enum FacialProcessingError {
     InternalError(String),
 }
 
+#[cfg(feature = "openvtuber")]
 impl From<tflite::Error> for FacialProcessingError {
     fn from(err: tflite::Error) -> Self {
         return match err {

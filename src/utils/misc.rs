@@ -1,4 +1,4 @@
-use crate::{error::FacialProcessingError, utils::face::FaceLandmark, vector};
+use crate::{error::FacialProcessingError, mat_init, utils::face::FaceLandmark, vector};
 use cv_convert::{TryFromCv, TryIntoCv};
 #[cfg(feature = "dlib")]
 use dlib_face_recognition::{Point, Rectangle};
@@ -17,8 +17,7 @@ use opencv::{
     video::KalmanFilter,
     Error,
 };
-use std::ops::Sub;
-use std::{cell::Cell, path::Path};
+use std::{cell::Cell, ops::Sub, path::Path};
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub enum LeftRight {
@@ -63,6 +62,7 @@ impl Default for Point2D {
         }
     }
 }
+#[cfg(feature = "dlib")]
 impl From<Point> for Point2D {
     fn from(pt: Point) -> Self {
         Point2D { x: pt.x, y: pt.y }
@@ -117,8 +117,8 @@ impl BoundingBox {
     }
     pub fn center(&self) -> FloatingPoint2D {
         FloatingPoint2D::new(
-            (self.x_maximum - self.x_minumum) / 2_f64 as f64,
-            (self.y_maximum - self.y_minumum) / 2_f64 as f64,
+            (self.x_maximum - self.x_minumum) as f64 / 2_f64 as f64,
+            (self.y_maximum - self.y_minumum) as f64 / 2_f64 as f64,
         )
     }
 }
@@ -165,13 +165,14 @@ impl From<Vec3d> for EulerAngles {
 #[derive(Clone, Debug)]
 pub enum BackendProviders {
     OpenVTuber {
-        face_detector_path: Path,
-        face_alignment_path: Path,
-        face_eyesolator_path: Path,
+        face_detector_path: Box<Path>,
+        face_alignment_path: Box<Path>,
+        face_eyesolator_path: Box<Path>,
     },
     DLib {
-        face_alignment_path: Path,
+        face_alignment_path: Box<Path>,
     },
+    None,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -181,7 +182,6 @@ pub struct ImageScale {
     pub method: FilterType,
 }
 
-#[derive(Copy, Clone)]
 pub enum PnPArguments {
     NoRandsc,
     Randsc {
@@ -219,11 +219,11 @@ impl PnPSolver {
             Point3d::new(-225.0, 170.0, -135.0),  // Left corner left eye
             Point3d::new(225.0, 170.0, -135.0),   // Right corner right eye
             Point3d::new(-150.0, -150.0, -125.0), // Mouth Corner left
-            Point3d::new(150.0, -150.0, -125.0),  // Mouth Corner right
+            Point3d::new(150.0, -150.0, -125.0)   // Mouth Corner right
         ];
 
         let focal_len = camera_res.x;
-        let center = Point2D::new(camera_res.x / 2, camera_res.y / 2);
+        let center = Point2D::new(camera_res.x / 2_f64, camera_res.y / 2_f64);
         let camera_matrix_na: Matrix3<f64> = Matrix3::from_row_slice(&[
             focal_len, 0.0, center.x, 0.0, focal_len, center.y, 0.0, 0.0, 1.0,
         ]);
@@ -270,35 +270,33 @@ impl PnPSolver {
     pub fn raw_forward(&self, data: FaceLandmark) -> Result<(Mat, Mat), FacialProcessingError> {
         match &self.pnp_args {
             PnPArguments::NoRandsc => {
-                let mut rvec = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let mut tvec = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let fp: Vector<Point2d> = data.pnp_landmarks().to_vec().map(|pt| Point2D::into(pt));
+                let mut rvec = mat_init!();
+                let mut tvec = mat_init!();
+
+                let mut fp: Vector<Point2d> = Vector::new();
+                for pt in data.pnp_landmarks().to_vec() {
+                    fp.push(Point2D::into(pt))
+                }
 
                 match solve_pnp(
-                    &self.face_3d.input_array(),
-                    &fp.input_array(),
-                    &self.camera_matrix.input_array(),
-                    &self.camera_distortion.input_array(),
-                    &mut rvec.input_array(),
-                    &mut tvec.input_array(),
+                    &self.face_3d.input_array().unwrap(),
+                    &fp.input_array().unwrap(),
+                    &self.camera_matrix.input_array().unwrap(),
+                    &self.camera_distortion.input_array().unwrap(),
+                    &mut rvec.output_array().unwrap(),
+                    &mut tvec.output_array().unwrap(),
                     self.pnp_extrinsic,
                     self.pnp_mode,
                 ) {
                     Ok(b) => {
                         if b {
-                            Ok((rvec, tvec))
+                            return Ok((rvec, tvec));
                         }
-                        Err(FacialProcessingError::InternalError(format!(
+                        return Err(FacialProcessingError::InternalError(format!(
                             "PnP Calculation failed"
-                        )))
+                        )));
                     }
-                    Err(why) => Err(FacialProcessingError::InternalError(why.to_string())),
+                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
                 }
             }
             PnPArguments::Randsc {
@@ -307,44 +305,37 @@ impl PnPSolver {
                 conf,
                 inliner,
             } => {
-                let mut rvec = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let mut tvec = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let fp: Vector<Point2d> = data.pnp_landmarks().to_vec().map(|pt| Point2D::into(pt));
-                let mut il = match *inliner {
-                    Ok(mut na) => na.output_array(),
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-
-                match solve_pnp_ransac(
-                    &self.face_3d.input_array(),
-                    &fp.input_array(),
-                    &self.camera_matrix.input_array(),
-                    &self.camera_distortion.input_array(),
-                    &mut rvec.input_array(),
-                    &mut tvec.input_array(),
+                let mut rvec = mat_init!();
+                let mut tvec = mat_init!();
+                let mut fp: Vector<Point2d> = Vector::new();
+                for pt in data.pnp_landmarks().to_vec() {
+                    fp.push(Point2D::into(pt))
+                }
+                let mut il = opencv::core::no_array().unwrap();
+                return match solve_pnp_ransac(
+                    &self.face_3d.input_array().unwrap(),
+                    &fp.input_array().unwrap(),
+                    &self.camera_matrix.input_array().unwrap(),
+                    &self.camera_distortion.input_array().unwrap(),
+                    &mut rvec.output_array().unwrap(),
+                    &mut tvec.output_array().unwrap(),
                     self.pnp_extrinsic,
                     *iter,
                     *reproj,
                     *conf,
-                    &mut il,
+                    &mut il.output_array().unwrap(),
                     self.pnp_mode,
                 ) {
                     Ok(b) => {
                         if b {
-                            Ok((rvec, tvec))
+                            return Ok((rvec, tvec));
                         }
                         Err(FacialProcessingError::InternalError(format!(
                             "PnP Calculation failed"
                         )))
                     }
                     Err(why) => Err(FacialProcessingError::InternalError(why.to_string())),
-                }
+                };
             }
         }
     }
@@ -352,18 +343,12 @@ impl PnPSolver {
     pub fn forward(&self, data: FaceLandmark) -> Result<EulerAngles, FacialProcessingError> {
         match self.raw_forward(data) {
             Ok((rvec, _tvec)) => {
-                let mut dest = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let mut jackobin = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
+                let mut dest = mat_init!();
+                let mut jackobin = mat_init!();
                 match rodrigues(
-                    &rvec.input_array(),
-                    &mut dest.output_array(),
-                    &mut jackobin.output_array(),
+                    &rvec.input_array().unwrap(),
+                    &mut dest.output_array().unwrap(),
+                    &mut jackobin.output_array().unwrap(),
                 ) {
                     Ok(_) => {}
                     Err(_) => {
@@ -373,34 +358,19 @@ impl PnPSolver {
                     }
                 }
 
-                let mut mtx_r = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let mut mtx_q = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let mut qx = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let mut qy = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
-                let mut qz = match Mat::default() {
-                    Ok(m) => m,
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
-                };
+                let mut mtx_r = mat_init!();
+                let mut mtx_q = mat_init!();
+                let mut qx = mat_init!();
+                let mut qy = mat_init!();
+                let mut qz = mat_init!();
 
                 match rq_decomp3x3(
-                    &mut dest.input_array(),
-                    &mut mtx_r.output_array(),
-                    &mut mtx_q.output_array(),
-                    &mut qx.output_array(),
-                    &mut qy.output_array(),
-                    &mut qz.output_array(),
+                    &mut dest.input_array().unwrap(),
+                    &mut mtx_r.output_array().unwrap(),
+                    &mut mtx_q.output_array().unwrap(),
+                    &mut qx.output_array().unwrap(),
+                    &mut qy.output_array().unwrap(),
+                    &mut qz.output_array().unwrap(),
                 ) {
                     Ok(rots) => Ok(EulerAngles::from(rots)),
                     Err(why) => Err(FacialProcessingError::InternalError(why.to_string())),

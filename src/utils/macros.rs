@@ -44,7 +44,24 @@ macro_rules! pt_abs {
 #[macro_export]
 macro_rules! pt_dist {
     ($pt1:expr, $pt2:expr) => {{
-        let dist: f64 = (($pt1.x() - $pt2.x()) ^ 2 + ($pt1.y() - $pt2.y()) ^ 2).sqrt();
+        let dist: f64 = ((($pt1.x() - $pt2.x()) * ($pt1.x() - $pt2.x())) as f64
+            + ($pt1.y() - $pt2.y()) * ($pt1.y() - $pt2.y()))
+        .sqrt();
         dist
+    }};
+}
+
+#[macro_export]
+macro_rules! mat_init {
+    () => {{
+        let mat: opencv::core::Mat = match opencv::core::Mat::default() {
+            Ok(v) => v,
+            Err(why) => {
+                return Err($crate::error::FacialProcessingError::InternalError(
+                    why.to_string(),
+                ))
+            }
+        };
+        mat
     }};
 }
