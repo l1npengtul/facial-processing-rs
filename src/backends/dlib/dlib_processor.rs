@@ -13,7 +13,6 @@ use dlib_face_recognition::{
 };
 use image::{ImageBuffer, Rgb};
 use std::path::Path;
-use vulkano::descriptor::descriptor_set::DescriptorSetsCollection;
 
 pub struct DLibProcessor {
     face_detector: FaceDetector,
@@ -24,7 +23,7 @@ impl DLibProcessor {
     pub fn new<P: AsRef<Path>>(landmark_detector: P) -> Result<Self, FacialProcessingError> {
         let landmark = match LandmarkPredictor::new(landmark_detector) {
             Ok(land) => land,
-            Err(why) => Err(FacialProcessingError::InitializeError(why)),
+            Err(why) => return Err(FacialProcessingError::InitializeError(why)),
         };
         Ok(DLibProcessor {
             face_detector: FaceDetector::new(),
@@ -58,7 +57,7 @@ impl DLibProcessor {
         bbox: BoundingBox,
     ) -> Vec<FaceLandmark> {
         let mut landmarks = vec![];
-        let landmark = self.landmark_detector.face_landmarks(data, bbox.into());
+        let landmark = self.landmark_detector.face_landmarks(data, &bbox.into());
         landmarks.push(FaceLandmark::from_dlib(bbox, landmark.to_vec()));
         landmarks
     }

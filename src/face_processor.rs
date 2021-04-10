@@ -7,7 +7,7 @@ use crate::backends::openvtuber::openvt_processor::OpenVTFaceProcessor;
 
 use crate::error::FacialProcessingError;
 use crate::utils::eyes::Eye;
-use crate::utils::misc::{BoundingBox, EulerAngles, LeftRight, PnPSolver};
+use crate::utils::misc::{BoundingBox, EulerAngles, LeftRight, PnPArguments, PnPSolver, Point2D};
 use crate::{
     face_processor_trait::FaceProcessorTrait,
     utils::{

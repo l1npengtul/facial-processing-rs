@@ -63,7 +63,10 @@ impl Default for Point2D {
 #[cfg(feature = "dlib")]
 impl From<Point> for Point2D {
     fn from(pt: Point) -> Self {
-        Point2D { x: pt.x, y: pt.y }
+        Point2D {
+            x: pt.x() as f64,
+            y: pt.y() as f64,
+        }
     }
 }
 
