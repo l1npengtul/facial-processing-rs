@@ -38,7 +38,7 @@ version = "0.1.7"
 optional = true
 
 [dependencies.opencv]
-version = "0.52.0"
+version = "0.51.0"
 features = ["clang-runtime", "buildtime-bindgen"] # build with precompiled opencv 4.3.0
 
 [dependencies.cv-convert]
