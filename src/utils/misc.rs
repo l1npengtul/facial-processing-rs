@@ -15,6 +15,7 @@ use opencv::{
         _InputOutputArray, CV_64F,
     },
 };
+use std::fmt::{Display, Formatter};
 use std::ops::Sub;
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
@@ -51,6 +52,9 @@ impl Point2D {
     pub fn y(&self) -> f64 {
         self.y
     }
+    pub fn to_string(self) -> String {
+        format!("{}", self)
+    }
 }
 impl Default for Point2D {
     fn default() -> Self {
@@ -58,6 +62,11 @@ impl Default for Point2D {
             x: 0.0_f64,
             y: 0.0_f64,
         }
+    }
+}
+impl Display for Point2D {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
     }
 }
 #[cfg(feature = "dlib")]
@@ -122,6 +131,20 @@ impl BoundingBox {
             (self.y_maximum - self.y_minumum) as f64 / 2_f64 as f64,
         )
     }
+    pub fn to_string(self) -> String {
+        format!("{}", self)
+    }
+}
+
+impl Display for BoundingBox {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "(low: {}, high: {})",
+            self.low_point(),
+            self.high_point()
+        )
+    }
 }
 
 #[cfg(feature = "dlib")]
@@ -153,6 +176,20 @@ pub struct EulerAngles {
     y: f64,
     z: f64,
 }
+impl EulerAngles {
+    pub fn to_string(self) -> String {
+        format!("{}", self)
+    }
+    pub fn x(&self) -> f64 {
+        self.x
+    }
+    pub fn y(&self) -> f64 {
+        self.y
+    }
+    pub fn z(&self) -> f64 {
+        self.z
+    }
+}
 impl From<Vec3d> for EulerAngles {
     fn from(vec: Vec3d) -> Self {
         EulerAngles {
@@ -160,6 +197,12 @@ impl From<Vec3d> for EulerAngles {
             y: *vec.get(1).unwrap(),
             z: *vec.get(2).unwrap(),
         }
+    }
+}
+
+impl Display for EulerAngles {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
