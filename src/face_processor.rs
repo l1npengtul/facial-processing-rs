@@ -204,6 +204,10 @@ pub struct FaceProcessor {
 }
 
 impl FaceProcessor {
+    pub fn calculate_face_bboxes(&self, image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Vec<BoundingBox> {
+        self.backend_held.get_face_detections(image)
+    }
+
     pub fn calculate_landmarks(
         &self,
         image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
