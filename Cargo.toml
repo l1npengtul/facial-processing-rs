@@ -29,13 +29,6 @@ version = "0.1.6"
 optional = true
 features = ["CL_VERSION_2_1", "CL_VERSION_2_2"]
 
-[dependencies.tvm]
-git = "https://github.com/l1npengtul/tvm.git"
-branch = "main"
-default-features = false
-optional = true
-features = ["static-linking"]
-
 [dependencies.tflite]
 version = "0.9.5"
 optional = true
@@ -45,8 +38,8 @@ version = "0.1.7"
 optional = true
 
 [dependencies.opencv]
-version = "0.51.0"
-features = ["clang-runtime"] # build with precompiled opencv 4.3.0
+version = "0.52.0"
+features = ["clang-runtime", "buildtime-bindgen"] # build with precompiled opencv 4.3.0
 
 [dependencies.cv-convert]
 version = "0.5.0"
