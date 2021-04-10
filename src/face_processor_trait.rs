@@ -1,13 +1,8 @@
 use crate::{
     error::FacialProcessingError,
-    utils::{
-        eyes::Eye,
-        face::FaceLandmark,
-        misc::{BoundingBox, EulerAngles, Point2D},
-    },
+    utils::{face::FaceLandmark, misc::BoundingBox},
 };
 use image::{ImageBuffer, Rgb};
-use std::{ops::Deref, path::Path};
 
 pub trait FaceProcessorTrait {
     fn init(&self, cpu: i16, confidence: f32) -> Result<(), FacialProcessingError>;

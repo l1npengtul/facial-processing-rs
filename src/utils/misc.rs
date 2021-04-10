@@ -1,23 +1,21 @@
 use crate::{error::FacialProcessingError, mat_init, utils::face::FaceLandmark, vector};
-use cv_convert::{TryFromCv, TryIntoCv};
+use cv_convert::TryFromCv;
 #[cfg(feature = "dlib")]
 use dlib_face_recognition::{Point, Rectangle};
 use image::imageops::FilterType;
-use nalgebra::{DMatrix, Matrix, Matrix1x2, Matrix1x4, Matrix2x1, Matrix3, Matrix4x1};
+use nalgebra::Matrix3;
 use opencv::{
     calib3d::{
-        rodrigues, rq_decomp3x3, solve_pnp, solve_pnp_ransac, solve_pnp_ransac_1, UsacParams,
-        SOLVEPNP_AP3P, SOLVEPNP_DLS, SOLVEPNP_EPNP, SOLVEPNP_IPPE, SOLVEPNP_IPPE_SQUARE,
-        SOLVEPNP_ITERATIVE, SOLVEPNP_MAX_COUNT, SOLVEPNP_SQPNP, SOLVEPNP_UPNP,
+        rodrigues, rq_decomp3x3, solve_pnp, solve_pnp_ransac, SOLVEPNP_AP3P, SOLVEPNP_DLS,
+        SOLVEPNP_EPNP, SOLVEPNP_IPPE, SOLVEPNP_IPPE_SQUARE, SOLVEPNP_ITERATIVE, SOLVEPNP_MAX_COUNT,
+        SOLVEPNP_SQPNP, SOLVEPNP_UPNP,
     },
     core::{
-        Mat, MatExpr, MatExprTrait, MatTrait, Point2d, Point3d, ToInputArray, ToOutputArray, Vec3,
-        Vec3d, Vector, _InputArray, _InputOutputArray, CV_32F, CV_64F,
+        Mat, MatExprTrait, Point2d, Point3d, ToInputArray, ToOutputArray, Vec3d, Vector,
+        _InputOutputArray, CV_64F,
     },
-    video::KalmanFilter,
-    Error,
 };
-use std::{cell::Cell, ops::Sub, path::Path};
+use std::ops::Sub;
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub enum LeftRight {
@@ -165,12 +163,12 @@ impl From<Vec3d> for EulerAngles {
 #[derive(Clone, Debug)]
 pub enum BackendProviders {
     OpenVTuber {
-        face_detector_path: Box<Path>,
-        face_alignment_path: Box<Path>,
-        face_eyesolator_path: Box<Path>,
+        face_detector_path: String,
+        face_alignment_path: String,
+        face_eyesolator_path: String,
     },
     DLib {
-        face_alignment_path: Box<Path>,
+        face_alignment_path: String,
     },
     None,
 }
@@ -303,7 +301,7 @@ impl PnPSolver {
                 iter,
                 reproj,
                 conf,
-                inliner,
+                inliner: _inliner,
             } => {
                 let mut rvec = mat_init!();
                 let mut tvec = mat_init!();

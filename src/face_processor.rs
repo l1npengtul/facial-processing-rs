@@ -5,21 +5,20 @@ use crate::backends::dlib::dlib_processor::DLibProcessor;
 #[cfg(feature = "openvtuber")]
 use crate::backends::openvtuber::openvt_processor::OpenVTFaceProcessor;
 
-use crate::utils::misc::BoundingBox;
+use crate::error::FacialProcessingError;
+use crate::utils::eyes::Eye;
+use crate::utils::misc::{BoundingBox, EulerAngles, LeftRight, PnPSolver};
 use crate::{
-    error::FacialProcessingError,
     face_processor_trait::FaceProcessorTrait,
     utils::{
         face::FaceLandmark,
         misc::{BackendProviders, ImageScale},
     },
 };
-use getset::{CopyGetters, Getters, MutGetters};
 use image::{imageops::FilterType, ImageBuffer, Rgb};
-use std::cell::{Cell, RefCell};
 
 pub struct FaceProcessorBuilder {
-    backend: Box<BackendProviders>,
+    backend: BackendProviders,
     desired_threads: Option<i16>,
     do_eye_calculations: bool,
     do_mouth_calculations: bool,
@@ -32,7 +31,7 @@ pub struct FaceProcessorBuilder {
 impl FaceProcessorBuilder {
     pub fn new() -> Self {
         FaceProcessorBuilder {
-            backend: Box::new(BackendProviders::None),
+            backend: BackendProviders::None,
             desired_threads: None,
             do_eye_calculations: true,
             do_mouth_calculations: true,
@@ -89,7 +88,7 @@ impl FaceProcessorBuilder {
 
     pub fn with_backend(self, backend: BackendProviders) -> Self {
         FaceProcessorBuilder {
-            backend: Box::new(backend),
+            backend: backend,
             desired_threads: self.desired_threads,
             do_eye_calculations: self.do_eye_calculations,
             do_mouth_calculations: self.do_mouth_calculations,
@@ -171,6 +170,13 @@ impl FaceProcessorBuilder {
             }
         };
 
+        let pnp = PnPSolver::new(
+            Point2D::new(self.input_image_x as f64, self.input_image_y as f64),
+            None,
+            PnPArguments::NoRandsc,
+        )
+        .unwrap();
+
         Ok(FaceProcessor {
             backend_setting: self.backend,
             backend_held,
@@ -180,12 +186,13 @@ impl FaceProcessorBuilder {
             input_image_x: self.input_image_x,
             input_image_y: self.input_image_y,
             image_scale: self.image_scale,
+            pnp,
         })
     }
 }
 
 pub struct FaceProcessor {
-    backend_setting: Box<BackendProviders>,
+    backend_setting: BackendProviders,
     backend_held: Box<dyn FaceProcessorTrait>,
     do_eye_calculations: bool,
     do_mouth_calculations: bool,
@@ -193,10 +200,11 @@ pub struct FaceProcessor {
     input_image_x: u32,
     input_image_y: u32,
     image_scale: Option<ImageScale>,
+    pnp: PnPSolver,
 }
 
 impl FaceProcessor {
-    pub fn calculate_raw_landmarks(
+    pub fn calculate_landmarks(
         &self,
         image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
         bbox: BoundingBox,
@@ -204,12 +212,17 @@ impl FaceProcessor {
         self.backend_held.get_face_landmark(image, bbox)
     }
 
-    pub fn calculate_pnp(&self, image: &ImageBuffer<Rgb<u8>, Vec<u8>>, landmark: FaceLandmark) {}
-
-    pub fn calculate_pnps(
+    pub fn calculate_pnp(
         &self,
-        image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
-        landmark: Vec<FaceLandmark>,
-    ) {
+        _image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+        landmark: FaceLandmark,
+    ) -> Result<EulerAngles, FacialProcessingError> {
+        self.pnp.forward(landmark)
+    }
+
+    pub fn eyes(&self, landmark: FaceLandmark, image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> [Eye; 2] {
+        let e1 = Eye::new(&landmark, LeftRight::Left, image);
+        let e2 = Eye::new(&landmark, LeftRight::Right, image);
+        [e1, e2]
     }
 }

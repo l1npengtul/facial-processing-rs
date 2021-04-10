@@ -1,7 +1,7 @@
 use crate::utils::misc::{BoundingBox, LeftRight, Point2D};
 #[cfg(feature = "dlib")]
 use dlib_face_recognition::Point;
-use opencv::core::{Point2d, Point_, ToInputArray, Vector, _InputArray};
+use opencv::core::{Point2d, ToInputArray, Vector, _InputArray};
 
 #[derive(Clone, Debug, Default, PartialOrd, PartialEq)]
 pub struct FaceLandmark {

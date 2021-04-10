@@ -1,23 +1,11 @@
 use crate::{
-    error::FacialProcessingError,
-    pt_abs, pt_dist, pt_mdpt,
+    pt_dist, pt_mdpt,
     utils::{
         face::FaceLandmark,
         misc::{LeftRight, Point2D},
     },
 };
-use cv_convert::{TryFromCv, TryIntoCv};
-use image::{imageops::crop_imm, ImageBuffer, Rgb};
-use nalgebra::Matrix3;
-use opencv::core::{Point2i, ToInputArray, ToOutputArray, BORDER_CONSTANT, BORDER_DEFAULT};
-use opencv::imgproc::{
-    bilateral_filter, erode, morphology_default_border_value, threshold, THRESH_BINARY,
-};
-use opencv::{
-    core::{Mat, MatTrait, CV_64F},
-    Error,
-};
-use std::cmp::{max, min};
+use image::{ImageBuffer, Rgb};
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub struct Eye {
@@ -28,16 +16,16 @@ pub struct Eye {
 }
 impl Eye {
     pub fn new(
-        landmarks: FaceLandmark,
+        landmarks: &FaceLandmark,
         side: LeftRight,
-        image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+        _image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
     ) -> Self {
         let points = landmarks.eye_landmarks(side).to_vec();
         // calculate the ratio
         let vertical = {
             let dist_a = pt_dist!(*points.get(1).unwrap(), *points.get(5).unwrap());
             let dist_b = pt_dist!(*points.get(2).unwrap(), *points.get(4).unwrap());
-            (dist_a + dist_b)
+            dist_a + dist_b
         };
         let mut horizontal = pt_dist!(*points.get(0).unwrap(), *points.get(3).unwrap());
         if horizontal == 0_f64 {
