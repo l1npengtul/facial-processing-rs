@@ -54,14 +54,6 @@ macro_rules! pt_dist {
 #[macro_export]
 macro_rules! mat_init {
     () => {{
-        let mat: opencv::core::Mat = match opencv::core::Mat::default() {
-            Ok(v) => v,
-            Err(why) => {
-                return Err($crate::error::FacialProcessingError::InternalError(
-                    why.to_string(),
-                ))
-            }
-        };
-        mat
+        opencv::core::Mat::default()
     }};
 }

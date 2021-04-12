@@ -47,7 +47,7 @@ impl DLibProcessor {
         &self,
         data: &ImageBuffer<Rgb<u8>, Vec<u8>>,
         bbox: BoundingBox,
-    ) -> Vec<FaceLandmark> {
+    ) -> FaceLandmark {
         self.landmark_faces_imagematrix(&ImageMatrix::from_image(data), bbox)
     }
 
@@ -55,11 +55,9 @@ impl DLibProcessor {
         &self,
         data: &ImageMatrix,
         bbox: BoundingBox,
-    ) -> Vec<FaceLandmark> {
-        let mut landmarks = vec![];
+    ) -> FaceLandmark {
         let landmark = self.landmark_detector.face_landmarks(data, &bbox.into());
-        landmarks.push(FaceLandmark::from_dlib(bbox, landmark.to_vec()));
-        landmarks
+        FaceLandmark::from_dlib(bbox, landmark.to_vec())
     }
 }
 
@@ -77,7 +75,7 @@ impl FaceProcessorTrait for DLibProcessor {
         &self,
         data: &ImageBuffer<Rgb<u8>, Vec<u8>>,
         bbox: BoundingBox,
-    ) -> Vec<FaceLandmark> {
+    ) -> FaceLandmark {
         self.landmark_faces(data, bbox)
     }
 }

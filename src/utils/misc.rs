@@ -15,8 +15,7 @@ use opencv::{
         _InputOutputArray, CV_64F,
     },
 };
-use std::fmt::{Display, Formatter};
-use std::ops::Sub;
+use std::{fmt::{Display, Formatter}, ops::Sub};
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub enum LeftRight {
@@ -52,9 +51,6 @@ impl Point2D {
     pub fn y(&self) -> f64 {
         self.y
     }
-    pub fn to_string(self) -> String {
-        format!("{}", self)
-    }
 }
 impl Default for Point2D {
     fn default() -> Self {
@@ -79,9 +75,9 @@ impl From<Point> for Point2D {
     }
 }
 
-impl Into<Point2d> for Point2D {
-    fn into(self) -> Point2d {
-        Point2d::new(self.x, self.y)
+impl From<Point2D> for Point2d {
+    fn from(val: Point2D) -> Self {
+        Point2d::new(val.x, val.y)
     }
 }
 
@@ -127,12 +123,9 @@ impl BoundingBox {
     }
     pub fn center(&self) -> FloatingPoint2D {
         FloatingPoint2D::new(
-            (self.x_maximum - self.x_minumum) as f64 / 2_f64 as f64,
-            (self.y_maximum - self.y_minumum) as f64 / 2_f64 as f64,
+            (self.x_maximum - self.x_minumum) as f64 / 2_f64,
+            (self.y_maximum - self.y_minumum) as f64 / 2_f64,
         )
-    }
-    pub fn to_string(self) -> String {
-        format!("{}", self)
     }
 }
 
@@ -177,9 +170,6 @@ pub struct EulerAngles {
     z: f64,
 }
 impl EulerAngles {
-    pub fn to_string(self) -> String {
-        format!("{}", self)
-    }
     pub fn x(&self) -> f64 {
         self.x
     }
@@ -336,11 +326,9 @@ impl PnPSolver {
                         if b {
                             return Ok((rvec, tvec));
                         }
-                        return Err(FacialProcessingError::InternalError(format!(
-                            "PnP Calculation failed"
-                        )));
+                        Err(FacialProcessingError::InternalError("PnP Calculation failed".to_string()))
                     }
-                    Err(why) => return Err(FacialProcessingError::InternalError(why.to_string())),
+                    Err(why) => Err(FacialProcessingError::InternalError(why.to_string())),
                 }
             }
             PnPArguments::Randsc {
@@ -356,7 +344,7 @@ impl PnPSolver {
                     fp.push(Point2D::into(pt))
                 }
                 let mut il = opencv::core::no_array().unwrap();
-                return match solve_pnp_ransac(
+                match solve_pnp_ransac(
                     &self.face_3d.input_array().unwrap(),
                     &fp.input_array().unwrap(),
                     &self.camera_matrix.input_array().unwrap(),
@@ -374,12 +362,10 @@ impl PnPSolver {
                         if b {
                             return Ok((rvec, tvec));
                         }
-                        Err(FacialProcessingError::InternalError(format!(
-                            "PnP Calculation failed"
-                        )))
+                        Err(FacialProcessingError::InternalError("PnP Calculation failed".to_string()))
                     }
                     Err(why) => Err(FacialProcessingError::InternalError(why.to_string())),
-                };
+                }
             }
         }
     }
@@ -389,18 +375,16 @@ impl PnPSolver {
             Ok((rvec, _tvec)) => {
                 let mut dest = mat_init!();
                 let mut jackobin = mat_init!();
-                match rodrigues(
+                if let Err(why) = rodrigues(
                     &rvec.input_array().unwrap(),
                     &mut dest.output_array().unwrap(),
                     &mut jackobin.output_array().unwrap(),
                 ) {
-                    Ok(_) => {}
-                    Err(_) => {
-                        return Err(FacialProcessingError::InternalError(
-                            "Failed to calculate rodrigues!".to_string(),
-                        ))
-                    }
+                    return Err(FacialProcessingError::InternalError(
+                        format!("Failed to calculate rodrigues: {}", why.to_string())
+                    ))
                 }
+                
 
                 let mut mtx_r = mat_init!();
                 let mut mtx_q = mat_init!();
@@ -409,7 +393,7 @@ impl PnPSolver {
                 let mut qz = mat_init!();
 
                 match rq_decomp3x3(
-                    &mut dest.input_array().unwrap(),
+                    &dest.input_array().unwrap(),
                     &mut mtx_r.output_array().unwrap(),
                     &mut mtx_q.output_array().unwrap(),
                     &mut qx.output_array().unwrap(),
@@ -422,6 +406,16 @@ impl PnPSolver {
             }
             Err(f) => Err(f),
         }
+    }
+
+    /// Get a reference to the pn p solver's camera res.
+    pub fn camera_res(&self) -> &Point2D {
+        &self.camera_res
+    }
+
+    /// Set the pn p solver's camera res.
+    pub fn set_camera_res(&mut self, camera_res: Point2D) {
+        self.camera_res = camera_res;
     }
 }
 

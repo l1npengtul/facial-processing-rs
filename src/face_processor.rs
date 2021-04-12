@@ -5,16 +5,7 @@ use crate::backends::dlib::dlib_processor::DLibProcessor;
 #[cfg(feature = "openvtuber")]
 use crate::backends::openvtuber::openvt_processor::OpenVTFaceProcessor;
 
-use crate::error::FacialProcessingError;
-use crate::utils::eyes::Eye;
-use crate::utils::misc::{BoundingBox, EulerAngles, LeftRight, PnPArguments, PnPSolver, Point2D};
-use crate::{
-    face_processor_trait::FaceProcessorTrait,
-    utils::{
-        face::FaceLandmark,
-        misc::{BackendProviders, ImageScale},
-    },
-};
+use crate::{error::FacialProcessingError, face_processor_trait::FaceProcessorTrait, utils::{eyes::Eye, face::FaceLandmark, misc::{BackendProviders, BoundingBox, EulerAngles, ImageScale, LeftRight, PnPSolver}}};
 use image::{imageops::FilterType, ImageBuffer, Rgb};
 
 pub struct FaceProcessorBuilder {
@@ -88,7 +79,7 @@ impl FaceProcessorBuilder {
 
     pub fn with_backend(self, backend: BackendProviders) -> Self {
         FaceProcessorBuilder {
-            backend: backend,
+            backend,
             desired_threads: self.desired_threads,
             do_eye_calculations: self.do_eye_calculations,
             do_mouth_calculations: self.do_mouth_calculations,
@@ -191,6 +182,12 @@ impl FaceProcessorBuilder {
     }
 }
 
+impl Default for FaceProcessorBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct FaceProcessor {
     backend_setting: BackendProviders,
     backend_held: Box<dyn FaceProcessorTrait>,
@@ -208,11 +205,11 @@ impl FaceProcessor {
         self.backend_held.get_face_detections(image)
     }
 
-    pub fn calculate_landmarks(
+    pub fn calculate_landmark(
         &self,
         image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
         bbox: BoundingBox,
-    ) -> Vec<FaceLandmark> {
+    ) -> FaceLandmark {
         self.backend_held.get_face_landmark(image, bbox)
     }
 
@@ -224,9 +221,58 @@ impl FaceProcessor {
         self.pnp.forward(landmark)
     }
 
-    pub fn eyes(&self, landmark: FaceLandmark, image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> [Eye; 2] {
+    pub fn calculate_eyes(
+        &self,
+        landmark: FaceLandmark,
+        image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+    ) -> [Eye; 2] {
         let e1 = Eye::new(&landmark, LeftRight::Left, image);
         let e2 = Eye::new(&landmark, LeftRight::Right, image);
         [e1, e2]
+    }
+
+    /// Get a reference to the face processor's backend setting.
+    pub fn backend_setting(&self) -> &BackendProviders {
+        &self.backend_setting
+    }
+
+    /// Get a reference to the face processor's do eye calculations.
+    pub fn do_eye_calculations(&self) -> &bool {
+        &self.do_eye_calculations
+    }
+
+    /// Get a reference to the face processor's do mouth calculations.
+    pub fn do_mouth_calculations(&self) -> &bool {
+        &self.do_mouth_calculations
+    }
+
+    /// Get a reference to the face processor's eye blink ratio.
+    pub fn eye_blink_ratio(&self) -> &f64 {
+        &self.eye_blink_ratio
+    }
+
+    /// Set the face processor's eye blink ratio.
+    pub fn set_eye_blink_ratio(&mut self, eye_blink_ratio: f64) {
+        self.eye_blink_ratio = eye_blink_ratio;
+    }
+
+    /// Get a reference to the face processor's input image x.
+    pub fn input_image_x(&self) -> &u32 {
+        &self.input_image_x
+    }
+
+    /// Get a reference to the face processor's input image y.
+    pub fn input_image_y(&self) -> &u32 {
+        &self.input_image_y
+    }
+
+    /// Get a reference to the face processor's image scale.
+    pub fn image_scale(&self) -> &Option<ImageScale> {
+        &self.image_scale
+    }
+
+    /// Set the face processor's image scale.
+    pub fn set_image_scale(&mut self, image_scale: Option<ImageScale>) {
+        self.image_scale = image_scale;
     }
 }
