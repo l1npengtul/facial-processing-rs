@@ -102,7 +102,7 @@ impl FaceProcessorTrait for OpenVTFaceProcessor {
         &self,
         data: &ImageBuffer<Rgb<u8>, Vec<u8>>,
         bbox: BoundingBox,
-    ) -> Vec<FaceLandmark> {
+    ) -> FaceLandmark {
         todo!()
     }
 }

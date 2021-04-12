@@ -208,11 +208,11 @@ impl FaceProcessor {
         self.backend_held.get_face_detections(image)
     }
 
-    pub fn calculate_landmarks(
+    pub fn calculate_landmark(
         &self,
         image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
         bbox: BoundingBox,
-    ) -> Vec<FaceLandmark> {
+    ) -> FaceLandmark {
         self.backend_held.get_face_landmark(image, bbox)
     }
 
@@ -224,7 +224,11 @@ impl FaceProcessor {
         self.pnp.forward(landmark)
     }
 
-    pub fn eyes(&self, landmark: FaceLandmark, image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> [Eye; 2] {
+    pub fn calculate_eyes(
+        &self,
+        landmark: FaceLandmark,
+        image: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+    ) -> [Eye; 2] {
         let e1 = Eye::new(&landmark, LeftRight::Left, image);
         let e2 = Eye::new(&landmark, LeftRight::Right, image);
         [e1, e2]
