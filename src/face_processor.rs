@@ -5,7 +5,7 @@ use crate::backends::dlib::dlib_processor::DLibProcessor;
 #[cfg(feature = "openvtuber")]
 use crate::backends::openvtuber::openvt_processor::OpenVTFaceProcessor;
 
-use crate::{error::FacialProcessingError, face_processor_trait::FaceProcessorTrait, utils::{eyes::Eye, face::FaceLandmark, misc::{BackendProviders, BoundingBox, EulerAngles, ImageScale, LeftRight, PnPSolver}}};
+use crate::{error::FacialProcessingError, face_processor_trait::FaceProcessorTrait, utils::{eyes::Eye, face::FaceLandmark, misc::{BackendProviders, BoundingBox, EulerAngles, ImageScale, LeftRight, PnPSolver, PnPArguments, Point2D}}};
 use image::{imageops::FilterType, ImageBuffer, Rgb};
 
 pub struct FaceProcessorBuilder {
