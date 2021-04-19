@@ -21,11 +21,11 @@ ndarray = "0.15.1"
 nalgebra = "0.25.4"
 
 [dependencies.vulkano]
-version = "0.21.0"
+version = "0.22.0"
 optional = true
 
 [dependencies.cl3]
-version = "0.1.6"
+version = "0.2.1"
 optional = true
 features = ["CL_VERSION_2_1", "CL_VERSION_2_2"]
 
@@ -38,12 +38,12 @@ version = "0.1.7"
 optional = true
 
 [dependencies.opencv]
-version = "0.51.0"
-features = ["clang-runtime", "buildtime-bindgen"] # build with precompiled opencv 4.3.0
+version = "0.52.0"
+features = ["clang-runtime", "buildtime-bindgen"] 
 
 [dependencies.cv-convert]
-version = "0.5.0"
+version = "0.6.0"
 default-features = false
-features = ["opencv-4", "opencv-buildtime-bindgen", "nalgebra"]
+features = ["opencv-4", "opencv-buildtime-bindgen", "opencv-clang-runtime", "nalgebra"]
 
 [build-dependencies]
