@@ -18,7 +18,7 @@ thiserror = "1.0.24"
 getset = "0.1.1"
 image = "0.23.14"
 ndarray = "0.15.1"
-nalgebra = "0.25.4"
+nalgebra = "0.26.1"
 
 [dependencies.vulkano]
 version = "0.22.0"
@@ -38,8 +38,8 @@ version = "0.1.7"
 optional = true
 
 [dependencies.opencv]
-version = "0.52.0"
-features = ["clang-runtime", "buildtime-bindgen"] 
+version = "0.53.0"
+features = ["clang-runtime"] 
 
 [dependencies.cv-convert]
 version = "0.6.0"
