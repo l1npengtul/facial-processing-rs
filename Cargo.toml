@@ -42,8 +42,8 @@ version = "0.53.0"
 features = ["clang-runtime"] 
 
 [dependencies.cv-convert]
-version = "0.6.0"
+git = "https://github.com/l1npengtul/rust-cv-convert.git"
 default-features = false
-features = ["opencv-4", "opencv-buildtime-bindgen", "opencv-clang-runtime", "nalgebra"]
+features = ["opencv-clang-runtime", "nalgebra"]
 
 [build-dependencies]
