@@ -164,7 +164,7 @@ impl FaceProcessorBuilder {
         let pnp = PnPSolver::new(
             Point2D::new(self.input_image_x as f64, self.input_image_y as f64),
             None,
-            Self::PnPArguments::NoRandsc,
+            PnPArguments::NoRandsc,
         )
         .unwrap();
 
