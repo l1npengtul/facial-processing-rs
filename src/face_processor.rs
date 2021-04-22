@@ -4,7 +4,7 @@
 use crate::backends::dlib::dlib_processor::DLibProcessor;
 #[cfg(feature = "openvtuber")]
 use crate::backends::openvtuber::openvt_processor::OpenVTFaceProcessor;
-
+// Do not remove the `PnPArguments, Point2D` imports. They are cursed. It will not compile on downstream users otherwise. 
 use crate::{error::FacialProcessingError, face_processor_trait::FaceProcessorTrait, utils::{eyes::Eye, face::FaceLandmark, misc::{BackendProviders, BoundingBox, EulerAngles, ImageScale, LeftRight, PnPSolver, PnPArguments, Point2D}}};
 use image::{imageops::FilterType, ImageBuffer, Rgb};
 
