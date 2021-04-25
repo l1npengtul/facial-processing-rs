@@ -11,13 +11,3 @@ pub enum FacialProcessingError {
     #[error("Internal Error: {0}")]
     InternalError(String),
 }
-
-#[cfg(feature = "openvtuber")]
-impl From<tflite::Error> for FacialProcessingError {
-    fn from(err: tflite::Error) -> Self {
-        return match err {
-            tflite::Error::IoError(io) => FacialProcessingError::IoError(io.to_string()),
-            tflite::Error::InternalError(int) => FacialProcessingError::InternalError(int),
-        };
-    }
-}

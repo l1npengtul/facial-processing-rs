@@ -10,7 +10,7 @@ edition = "2018"
 default = []
 vulkan = ["vulkano"]
 opencl = ["cl3"]
-openvtuber=["tflite"]
+openvtuber=["openvtuber-rs"]
 dlib = ["dlib-face-recognition"]
 
 [dependencies]
@@ -29,8 +29,8 @@ version = "0.2.1"
 optional = true
 features = ["CL_VERSION_2_1", "CL_VERSION_2_2"]
 
-[dependencies.tflite]
-version = "0.9.5"
+[dependencies.openvtuber-rs]
+version = "0.1.4"
 optional = true
 
 [dependencies.dlib-face-recognition]

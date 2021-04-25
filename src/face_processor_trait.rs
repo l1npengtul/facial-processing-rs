@@ -1,7 +1,4 @@
-use crate::{
-    error::FacialProcessingError,
-    utils::{face::FaceLandmark, misc::BoundingBox},
-};
+use crate::{error::FacialProcessingError, utils::{face::FaceLandmark, misc::{BoundingBox, EulerAngles}}};
 use image::{ImageBuffer, Rgb};
 
 pub trait FaceProcessorTrait {
@@ -12,4 +9,10 @@ pub trait FaceProcessorTrait {
         data: &ImageBuffer<Rgb<u8>, Vec<u8>>,
         bbox: BoundingBox,
     ) -> FaceLandmark;
+
+    fn get_pnp_forward(&self,
+        data: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+        landmark: FaceLandmark) -> EulerAngles;
+    
+        
 }

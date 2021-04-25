@@ -165,9 +165,9 @@ impl Into<Rectangle> for BoundingBox {
 
 #[derive(Copy, Clone, Debug, PartialOrd, PartialEq)]
 pub struct EulerAngles {
-    x: f64,
-    y: f64,
-    z: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 impl EulerAngles {
     pub fn x(&self) -> f64 {
@@ -198,11 +198,7 @@ impl Display for EulerAngles {
 
 #[derive(Clone, Debug)]
 pub enum BackendProviders {
-    OpenVTuber {
-        face_detector_path: String,
-        face_alignment_path: String,
-        face_eyesolator_path: String,
-    },
+    OpenVTuber,
     DLib {
         face_alignment_path: String,
     },
