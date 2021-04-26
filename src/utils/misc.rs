@@ -8,7 +8,7 @@ use opencv::{
     calib3d::{
         rodrigues, rq_decomp3x3, solve_pnp, solve_pnp_ransac, SOLVEPNP_AP3P, SOLVEPNP_DLS,
         SOLVEPNP_EPNP, SOLVEPNP_IPPE, SOLVEPNP_IPPE_SQUARE, SOLVEPNP_ITERATIVE, SOLVEPNP_MAX_COUNT,
-        SOLVEPNP_SQPNP, SOLVEPNP_UPNP,
+         SOLVEPNP_UPNP,
     },
     core::{
         Mat, MatExprTrait, Point2d, Point3d, ToInputArray, ToOutputArray, Vec3d, Vector,
@@ -274,7 +274,7 @@ impl PnPSolver {
         let pnp_mode = match calc_mode {
             Some(mode) => match mode {
                 SOLVEPNP_AP3P | SOLVEPNP_DLS | SOLVEPNP_ITERATIVE | SOLVEPNP_IPPE
-                | SOLVEPNP_IPPE_SQUARE | SOLVEPNP_MAX_COUNT | SOLVEPNP_SQPNP | SOLVEPNP_EPNP
+                | SOLVEPNP_IPPE_SQUARE | SOLVEPNP_MAX_COUNT | SOLVEPNP_EPNP
                 | SOLVEPNP_UPNP => mode,
                 _ => {
                     return Err(FacialProcessingError::InitializeError(format!(
@@ -283,7 +283,7 @@ impl PnPSolver {
                     )))
                 }
             },
-            None => SOLVEPNP_SQPNP,
+            None => SOLVEPNP_AP3P,
         };
 
         Ok(PnPSolver {
