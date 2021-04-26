@@ -78,4 +78,10 @@ impl FaceProcessorTrait for DLibProcessor {
     ) -> FaceLandmark {
         self.landmark_faces(data, bbox)
     }
+
+    fn get_pnp_forward(&self,
+        data: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+        landmark: FaceLandmark) -> EulerAngles {
+            todo!()
+        }
 }
