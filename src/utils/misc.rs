@@ -275,7 +275,7 @@ impl PnPSolver {
             Some(mode) => match mode {
                 SOLVEPNP_AP3P | SOLVEPNP_DLS | SOLVEPNP_ITERATIVE | SOLVEPNP_IPPE
                 | SOLVEPNP_IPPE_SQUARE | SOLVEPNP_MAX_COUNT | SOLVEPNP_EPNP
-                | SOLVEPNP_UPNP | SOLVEPNP_SQPNP => mode,
+                | SOLVEPNP_UPNP => mode,
                 _ => {
                     return Err(FacialProcessingError::InitializeError(format!(
                         "{} is not a valid PNP setting!",
@@ -283,7 +283,7 @@ impl PnPSolver {
                     )))
                 }
             },
-            None => SOLVEPNP_SQPNP,
+            None => SOLVEPNP_EPNP,
         };
 
         Ok(PnPSolver {
